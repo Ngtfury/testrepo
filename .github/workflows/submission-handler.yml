@@ -1,0 +1,80 @@
+name: Handle Submissions
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  process-submission:
+    if: github.event.label.name == 'accepted'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Get issue info
+        id: issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = context.payload.issue.number;
+            const username_match = context.payload.issue.body.match(/GitHub Username\s*\n\s*(.*)/);
+            const text_match = context.payload.issue.body.match(/Your Submission Text\s*\n\s*([\s\S]*)/);
+            const username = username_match ? username_match[1].trim() : context.payload.issue.user.login;
+            const text = text_match ? text_match[1].trim() : '';
+            core.setOutput('username', username);
+            core.setOutput('text', text);
+            core.setOutput('issue_number', issue_number);
+
+      - name: Create submission folder
+        run: |
+          mkdir -p submissions/${{ steps.issue.outputs.username }}
+
+      - name: Save text submission
+        run: |
+          echo "${{ steps.issue.outputs.text }}" > submissions/${{ steps.issue.outputs.username }}/submission.txt
+
+      - name: Download image from issue comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number = context.payload.issue.number;
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue_number,
+            });
+
+            const imageRegex = /!\[.*\]\((https:\/\/user-images\.githubusercontent\.com\/[^\s)]+)\)/;
+            for (const comment of comments.data) {
+              const match = comment.body.match(imageRegex);
+              if (match) {
+                core.setOutput("image_url", match[1]);
+                break;
+              }
+            }
+
+      - name: Download image
+        if: steps.image.outputs.image_url != ''
+        run: |
+          wget "${{ steps.image.outputs.image_url }}" -O submissions/${{ steps.issue.outputs.username }}/submission.jpg
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add submissions/
+          git commit -m "Add submission from ${{ steps.issue.outputs.username }}"
+          git push
+
+      - name: Label as open for review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              issue_number: ${{ steps.issue.outputs.issue_number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['open for review']
+            });
