@@ -1,0 +1,27 @@
+name: Submission
+description: Submit your entry (text + image)
+title: "[Submission] <your title here>"
+labels: ["submission"]
+body:
+  - type: input
+    id: username
+    attributes:
+      label: GitHub Username
+      description: Your GitHub username (should match your account)
+      placeholder: eg. sreeram
+    validations:
+      required: true
+
+  - type: textarea
+    id: entry_text
+    attributes:
+      label: Your Submission Text
+      description: Write your content here
+      placeholder: Your story, explanation, or idea...
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        🎯 Please upload your image file below (drag and drop it into the comment box after submitting the issue).
