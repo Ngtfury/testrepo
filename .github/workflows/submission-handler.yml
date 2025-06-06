@@ -47,7 +47,7 @@ jobs:
               issue_number: issue_number,
             });
 
-            const imageRegex = /!\[.*\]\((https:\/\/user-images\.githubusercontent\.com\/[^\s)]+)\)/;
+            const imageRegex = /!\[.*\]\((https:\/\/(?:private-)?user-images\.githubusercontent\.com\/[^\s)]+|https:\/\/github\.com\/user-attachments\/assets\/[^\s)]+)\)/;
             for (const comment of comments.data) {
               const match = comment.body.match(imageRegex);
               if (match) {
