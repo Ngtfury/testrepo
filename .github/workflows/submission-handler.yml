@@ -36,6 +36,7 @@ jobs:
           echo "${{ steps.issue.outputs.text }}" > submissions/${{ steps.issue.outputs.username }}/submission.txt
 
       - name: Download image from issue comment
+        id: image
         uses: actions/github-script@v7
         with:
           script: |
